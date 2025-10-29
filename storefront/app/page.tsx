@@ -4,9 +4,9 @@ import { graphqlClient } from '@/lib/graphql-client';
 import { GET_PRODUCTS } from '@/lib/queries';
 import { ProductListResponse } from '@/types';
 
-// Revalidate this page every 10 seconds in production
-// In development, it will always fetch fresh data
-export const revalidate = 10;
+// Force dynamic rendering - no caching, always fetch fresh data
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 async function getProducts() {
   try {
