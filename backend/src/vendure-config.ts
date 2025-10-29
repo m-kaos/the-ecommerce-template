@@ -6,6 +6,7 @@ import {
 } from '@vendure/core';
 import { defaultEmailHandlers, EmailPlugin } from '@vendure/email-plugin';
 import { AssetServerPlugin } from '@vendure/asset-server-plugin';
+import { AdminUiPlugin } from '@vendure/admin-ui-plugin';
 import path from 'path';
 
 const IS_DEV = process.env.NODE_ENV !== 'production';
@@ -67,7 +68,9 @@ export const config: VendureConfig = {
         changeEmailAddressUrl: process.env.SHOP_URL || 'http://localhost:3000/change-email',
       },
     }),
-    // Admin UI will be added in Phase 3 with proper production setup
-    // For Phase 1: Use GraphQL Playground at http://localhost:3001/admin-api
+    AdminUiPlugin.init({
+      route: 'admin',
+      port: 3002,
+    }),
   ],
 };
