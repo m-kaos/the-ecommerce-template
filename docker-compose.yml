@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: vendure-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-vendure}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: vendure-backend
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: development
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-vendure}
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      SUPERADMIN_USERNAME: ${SUPERADMIN_USERNAME:-superadmin}
+      SUPERADMIN_PASSWORD: ${SUPERADMIN_PASSWORD:-superadmin}
+      COOKIE_SECRET: ${COOKIE_SECRET:-cookie-secret-change-in-production}
+      SHOP_URL: ${SHOP_URL:-http://localhost:3000}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend/src:/app/src
+      - ./backend/static:/app/static
+      - backend_node_modules:/app/node_modules
+
+  storefront:
+    build:
+      context: ./storefront
+      dockerfile: Dockerfile
+    container_name: vendure-storefront
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_VENDURE_SHOP_API_URL: ${NEXT_PUBLIC_VENDURE_SHOP_API_URL:-http://localhost:3001/shop-api}
+    depends_on:
+      - backend
+    volumes:
+      - ./storefront:/app
+      - storefront_node_modules:/app/node_modules
+      - /app/.next
+
+volumes:
+  postgres_data:
+  backend_node_modules:
+  storefront_node_modules:

@@ -1,0 +1,28 @@
+{
+  "name": "vendure-nextjs-ecommerce-template",
+  "version": "1.0.0",
+  "description": "Production-ready e-commerce template with Vendure backend and Next.js storefront",
+  "private": true,
+  "scripts": {
+    "docker:up": "docker-compose up",
+    "docker:up:build": "docker-compose up --build",
+    "docker:down": "docker-compose down",
+    "docker:reset": "docker-compose down -v && docker-compose up --build",
+    "backend:dev": "cd backend && npm run dev",
+    "backend:build": "cd backend && npm run build",
+    "storefront:dev": "cd storefront && npm run dev",
+    "storefront:build": "cd storefront && npm run build",
+    "dev": "echo 'Use docker:up for full stack, or backend:dev/storefront:dev for individual services'",
+    "install:all": "cd backend && npm install && cd ../storefront && npm install"
+  },
+  "keywords": [
+    "vendure",
+    "nextjs",
+    "ecommerce",
+    "template",
+    "typescript",
+    "graphql"
+  ],
+  "author": "",
+  "license": "MIT"
+}
