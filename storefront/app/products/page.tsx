@@ -3,6 +3,9 @@ import { graphqlClient } from '@/lib/graphql-client';
 import { GET_PRODUCTS } from '@/lib/queries';
 import { ProductListResponse } from '@/types';
 
+// Revalidate every 10 seconds
+export const revalidate = 10;
+
 async function getAllProducts() {
   try {
     const result = await graphqlClient.query<ProductListResponse>(

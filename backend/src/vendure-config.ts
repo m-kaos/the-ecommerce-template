@@ -67,7 +67,7 @@ export const config: VendureConfig = {
         changeEmailAddressUrl: process.env.SHOP_URL || 'http://localhost:3000/change-email',
       },
     }),
-    // Note: AdminUiPlugin requires compilation. For dev, use @vendure/admin-ui-plugin or access admin at /admin
-    // AdminUiPlugin will be properly configured in production builds
+    // Admin UI will be added in Phase 3 with proper production setup
+    // For Phase 1: Use GraphQL Playground at http://localhost:3001/admin-api
   ],
 };
