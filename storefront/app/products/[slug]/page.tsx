@@ -1,31 +1,51 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import { graphqlClient } from '@/lib/graphql-client';
 import { GET_PRODUCT_BY_SLUG } from '@/lib/queries';
-import { ProductResponse } from '@/types';
+import { Product } from '@/types';
+import AddToCartButton from '@/components/AddToCartButton';
 
-interface ProductPageProps {
-  params: Promise<{
-    slug: string;
-  }>;
+interface ProductResponse {
+  product: Product | null;
 }
 
-async function getProduct(slug: string) {
-  try {
-    const result = await graphqlClient.query<ProductResponse>(
-      GET_PRODUCT_BY_SLUG,
-      { slug }
+export default function ProductPage() {
+  const params = useParams();
+  const slug = params.slug as string;
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchProduct() {
+      try {
+        const result = await graphqlClient.query<ProductResponse>(
+          GET_PRODUCT_BY_SLUG,
+          { slug }
+        );
+        setProduct(result.data?.product || null);
+      } catch (error) {
+        console.error('Error fetching product:', error);
+        setProduct(null);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchProduct();
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-xl text-gray-600">Loading...</div>
+        </div>
+      </div>
     );
-    return result.data?.product;
-  } catch (error) {
-    console.error('Error fetching product:', error);
-    return null;
   }
-}
-
-export default async function ProductPage({ params }: ProductPageProps) {
-  const { slug } = await params;
-  const product = await getProduct(slug);
 
   if (!product) {
     notFound();
@@ -130,9 +150,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           </div>
 
           {/* Add to cart button */}
-          <button className="w-full bg-primary-600 text-white px-8 py-4 rounded-lg hover:bg-primary-700 transition font-semibold text-lg">
-            Add to Cart
-          </button>
+          <AddToCartButton product={product} />
 
           {/* Product metadata */}
           {product.collections && product.collections.length > 0 && (
