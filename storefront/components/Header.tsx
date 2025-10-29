@@ -2,9 +2,11 @@
 
 import Link from 'next/link';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Header() {
   const { totalItems } = useCart();
+  const { customer, loading } = useAuth();
 
   return (
     <header className="bg-white shadow-sm border-b">
@@ -21,6 +23,27 @@ export default function Header() {
             >
               Products
             </Link>
+
+            {!loading && (
+              <>
+                {customer ? (
+                  <Link
+                    href="/account"
+                    className="text-gray-700 hover:text-primary-600 transition"
+                  >
+                    Account
+                  </Link>
+                ) : (
+                  <Link
+                    href="/login"
+                    className="text-gray-700 hover:text-primary-600 transition"
+                  >
+                    Login
+                  </Link>
+                )}
+              </>
+            )}
+
             <Link
               href="/cart"
               className="text-gray-700 hover:text-primary-600 transition relative"

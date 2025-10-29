@@ -15,6 +15,7 @@ export const graphqlClient = new Client({
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include', // Send cookies with requests
     };
   },
 });

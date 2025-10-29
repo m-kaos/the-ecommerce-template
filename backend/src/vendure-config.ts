@@ -20,9 +20,14 @@ export const config: VendureConfig = {
     adminApiDebug: IS_DEV,
     shopApiPlayground: IS_DEV,
     shopApiDebug: IS_DEV,
+    cors: {
+      origin: true,
+      credentials: true,
+    },
   },
   authOptions: {
     tokenMethod: ['bearer', 'cookie'],
+    requireVerification: false, // Skip email verification for development
     superadminCredentials: {
       identifier: process.env.SUPERADMIN_USERNAME || 'superadmin',
       password: process.env.SUPERADMIN_PASSWORD || 'superadmin',
