@@ -74,3 +74,60 @@ export const GET_COLLECTIONS = gql`
     }
   }
 `;
+
+export const SEARCH_PRODUCTS = gql`
+  query SearchProducts($input: SearchInput!) {
+    search(input: $input) {
+      items {
+        productId
+        productName
+        slug
+        description
+        productAsset {
+          id
+          preview
+        }
+        priceWithTax {
+          ... on PriceRange {
+            min
+            max
+          }
+          ... on SinglePrice {
+            value
+          }
+        }
+        currencyCode
+        collectionIds
+      }
+      totalItems
+      facetValues {
+        count
+        facetValue {
+          id
+          name
+          facet {
+            id
+            name
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const GET_FACETS = gql`
+  query GetFacets {
+    facets {
+      items {
+        id
+        name
+        code
+        values {
+          id
+          name
+          code
+        }
+      }
+    }
+  }
+`;

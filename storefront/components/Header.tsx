@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
+import SearchBar from './SearchBar';
 
 export default function Header() {
   const { totalItems } = useCart();
@@ -11,12 +12,17 @@ export default function Header() {
   return (
     <header className="bg-white shadow-sm border-b">
       <nav className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
-          <Link href="/" className="text-2xl font-bold text-primary-600">
+        <div className="flex items-center justify-between gap-6">
+          <Link href="/" className="text-2xl font-bold text-primary-600 flex-shrink-0">
             Vendure Store
           </Link>
 
-          <div className="flex items-center space-x-6">
+          {/* Search Bar */}
+          <div className="hidden md:flex flex-1 max-w-2xl">
+            <SearchBar />
+          </div>
+
+          <div className="flex items-center space-x-6 flex-shrink-0">
             <Link
               href="/products"
               className="text-gray-700 hover:text-primary-600 transition"
