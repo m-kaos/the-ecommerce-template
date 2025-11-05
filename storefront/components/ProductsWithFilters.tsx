@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import ProductCard from './ProductCard';
+import ProductCardSkeleton from './ProductCardSkeleton';
 import { graphqlClient } from '@/lib/graphql-client';
 import { GET_PRODUCTS, GET_COLLECTIONS } from '@/lib/queries';
 import { Product } from '@/types';
@@ -198,9 +199,10 @@ export default function ProductsWithFilters({ initialProducts }: ProductsWithFil
       {/* Products Grid */}
       <div className="lg:col-span-3">
         {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-            <p className="text-gray-600 mt-4">Loading products...</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <ProductCardSkeleton key={i} />
+            ))}
           </div>
         ) : products.length > 0 ? (
           <>

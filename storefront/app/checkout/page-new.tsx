@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
@@ -13,8 +13,6 @@ import {
   ADD_ITEM_TO_ORDER,
   GET_ACTIVE_ORDER,
   TRANSITION_TO_STATE,
-  REMOVE_ORDER_LINE,
-  SET_CUSTOMER_FOR_ORDER,
 } from '@/lib/checkout-queries';
 import { Elements } from '@stripe/react-stripe-js';
 import { getStripe } from '@/lib/stripe';
@@ -54,22 +52,15 @@ export default function CheckoutPage() {
   // Shipping
   const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([]);
   const [selectedShipping, setSelectedShipping] = useState<string>('');
-  const [shippingPrice, setShippingPrice] = useState<number>(0);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const orderCreatedRef = useRef(false);
-  const hasRedirectedRef = useRef(false);
 
   useEffect(() => {
-    if (!authLoading && !customer && !hasRedirectedRef.current) {
-      hasRedirectedRef.current = true;
+    if (!authLoading && !customer) {
       router.push('/login?redirect=/checkout');
-      return;
     }
 
-    if (customer && items.length === 0 && !isProcessingPayment && !hasRedirectedRef.current) {
-      hasRedirectedRef.current = true;
+    if (customer && items.length === 0 && !isProcessingPayment) {
       router.push('/cart');
-      return;
     }
 
     if (customer && !address.fullName) {
@@ -83,43 +74,22 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     const createOrder = async () => {
-      // Only create order once - use ref to prevent multiple executions
-      if (customer && items.length > 0 && !orderId && !orderCreatedRef.current) {
-        console.log('[DEBUG] useEffect: Creating order...');
-        orderCreatedRef.current = true;
+      if (customer && items.length > 0) {
         try {
           const checkResult = await graphqlClient.query(GET_ACTIVE_ORDER, {});
-          console.log('[DEBUG] useEffect: Existing order check:', checkResult.data?.activeOrder);
 
           if (checkResult.data?.activeOrder?.id) {
             const existingOrderId = checkResult.data.activeOrder.id;
             const existingOrder = checkResult.data.activeOrder;
 
-            // Only use existing order if it's in the correct state for checkout
             if (existingOrder.lines && existingOrder.lines.length > 0) {
-              console.log('[DEBUG] useEffect: Found existing order:', existingOrderId, 'state:', existingOrder.state);
-
-              // If order is not in AddingItems state, it's stale - clear session and reload
-              if (existingOrder.state !== 'AddingItems') {
-                console.log('[DEBUG] useEffect: Order is in wrong state (' + existingOrder.state + '), clearing session...');
-
-                // Clear all cookies to reset the session
-                document.cookie.split(";").forEach(c => {
-                  document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
-                });
-
-                console.log('[DEBUG] useEffect: Session cleared, reloading page...');
-                window.location.reload();
-                return;
+              if (orderId !== existingOrderId) {
+                setOrderId(existingOrderId);
               }
-
-              // Order is in good state, use it
-              setOrderId(existingOrderId);
               return;
             }
           }
 
-          console.log('[DEBUG] useEffect: Adding items to order, count:', items.length);
           for (let i = 0; i < items.length; i++) {
             const item = items[i];
             await graphqlClient.mutation(ADD_ITEM_TO_ORDER, {
@@ -130,20 +100,16 @@ export default function CheckoutPage() {
 
           const result = await graphqlClient.query(GET_ACTIVE_ORDER, {});
           if (result.data?.activeOrder?.id) {
-            console.log('[DEBUG] useEffect: Order created:', result.data.activeOrder.id, 'state:', result.data.activeOrder.state);
             setOrderId(result.data.activeOrder.id);
           }
         } catch (err) {
-          console.error('[DEBUG] useEffect: Error creating order:', err);
-          orderCreatedRef.current = false; // Reset on error so it can retry
+          console.error('Error creating order:', err);
         }
-      } else {
-        console.log('[DEBUG] useEffect: Skipping order creation. customer:', !!customer, 'items.length:', items.length, 'orderId:', orderId, 'ref:', orderCreatedRef.current);
       }
     };
 
     createOrder();
-  }, [customer, items.length, orderId]);
+  }, [customer, items]);
 
   const handleAddressSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,7 +117,6 @@ export default function CheckoutPage() {
     setError('');
 
     try {
-      console.log('[DEBUG] Submitting shipping address');
       const result = await Promise.race([
         graphqlClient.mutation(SET_SHIPPING_ADDRESS, {
           input: address,
@@ -161,24 +126,17 @@ export default function CheckoutPage() {
         )
       ]);
 
-      console.log('[DEBUG] SET_SHIPPING_ADDRESS result:', JSON.stringify(result, null, 2));
-
       if (result.data?.setOrderShippingAddress?.id) {
-        console.log('[DEBUG] Address set successfully, order state:', result.data.setOrderShippingAddress.state);
         const methodsResult = await graphqlClient.query(GET_ELIGIBLE_SHIPPING_METHODS, {});
         const methods = methodsResult.data?.eligibleShippingMethods || [];
-        console.log('[DEBUG] Got shipping methods:', methods.length);
         setShippingMethods(methods);
         setStep('shipping');
       } else if (result.data?.setOrderShippingAddress?.errorCode) {
-        console.error('[DEBUG] Address error:', result.data.setOrderShippingAddress);
         setError(result.data.setOrderShippingAddress.message || 'Failed to set shipping address');
       } else {
-        console.error('[DEBUG] Unknown address error:', result);
         setError('Failed to set shipping address');
       }
     } catch (err: any) {
-      console.error('[DEBUG] Exception in handleAddressSubmit:', err);
       setError(err.message || 'An error occurred');
     } finally {
       setLoading(false);
@@ -197,24 +155,11 @@ export default function CheckoutPage() {
     setError('');
 
     try {
-      console.log('[DEBUG] Setting shipping method:', selectedShipping);
       const result = await graphqlClient.mutation(SET_SHIPPING_METHOD, {
         shippingMethodId: [selectedShipping],
       });
 
-      console.log('[DEBUG] SET_SHIPPING_METHOD result:', JSON.stringify(result, null, 2));
-
       if (result.data?.setOrderShippingMethod?.id) {
-        console.log('[DEBUG] Shipping method set successfully');
-        console.log('[DEBUG] Order state after setting shipping:', result.data.setOrderShippingMethod.state);
-
-        // Check if we need to manually transition to ArrangingPayment
-        if (result.data.setOrderShippingMethod.state === 'AddingItems') {
-          console.log('[DEBUG] Order still in AddingItems. Skipping transition - let Vendure handle it automatically.');
-          // Don't manually transition - Vendure should auto-transition when payment is added
-        }
-
-        console.log('[DEBUG] Creating payment intent');
         // Create Stripe Payment Intent
         const response = await fetch('/api/create-payment-intent', {
           method: 'POST',
@@ -226,7 +171,6 @@ export default function CheckoutPage() {
         });
 
         const data = await response.json();
-        console.log('[DEBUG] Payment intent response:', data);
 
         if (data.clientSecret) {
           setClientSecret(data.clientSecret);
@@ -235,14 +179,11 @@ export default function CheckoutPage() {
           setError(data.error || 'Failed to initialize payment');
         }
       } else if (result.data?.setOrderShippingMethod?.errorCode) {
-        console.error('[DEBUG] Shipping method error:', result.data.setOrderShippingMethod);
         setError(result.data.setOrderShippingMethod.message || 'Failed to set shipping method');
       } else {
-        console.error('[DEBUG] Unknown shipping method error:', result);
         setError('Failed to set shipping method');
       }
     } catch (err: any) {
-      console.error('[DEBUG] Exception in handleShippingSubmit:', err);
       setError(err.message || 'An error occurred');
     } finally {
       setLoading(false);
@@ -250,76 +191,42 @@ export default function CheckoutPage() {
   };
 
   const handlePaymentSuccess = async () => {
-    console.log('[DEBUG PAYMENT] ========== STARTING PAYMENT PROCESS ==========');
     setIsProcessingPayment(true);
     setLoading(true);
 
     try {
-      // First, check the current order state (bypass cache to get fresh data)
-      console.log('[DEBUG PAYMENT] Step 1: Checking current order state...');
-      const orderCheck = await graphqlClient.query(GET_ACTIVE_ORDER, {}, {
-        requestPolicy: 'network-only',  // Force fresh fetch, bypass cache
-      });
-      const currentOrder = orderCheck.data?.activeOrder;
-
-      console.log('[DEBUG PAYMENT] Current order:', {
-        id: currentOrder?.id,
-        state: currentOrder?.state,
-        hasShippingAddress: !!currentOrder?.shippingAddress,
-        totalWithTax: currentOrder?.totalWithTax,
-        lines: currentOrder?.lines?.length
+      // Transition to ArrangingPayment
+      const transitionResult = await graphqlClient.mutation(TRANSITION_TO_STATE, {
+        state: 'ArrangingPayment',
       });
 
-      if (!currentOrder) {
-        console.error('[DEBUG PAYMENT] ERROR: No active order found!');
-        setError('No active order found. Please start checkout again.');
-        setLoading(false);
+      if (transitionResult.data?.transitionOrderToState?.errorCode) {
+        setError(transitionResult.data.transitionOrderToState.message || 'Failed to prepare order');
         return;
       }
 
-      // Check order state but don't force transition - let addPaymentToOrder handle it
-      console.log('[DEBUG PAYMENT] Current order state:', currentOrder.state);
-      if (currentOrder.state === 'ArrangingPayment') {
-        console.log('[DEBUG PAYMENT] Order already in ArrangingPayment state - good!');
-      } else if (currentOrder.state === 'AddingItems') {
-        console.log('[DEBUG PAYMENT] Order still in AddingItems - addPaymentToOrder should handle transition');
-      } else {
-        console.warn('[DEBUG PAYMENT] WARNING: Order in unexpected state:', currentOrder.state);
-      }
-
       // Add payment metadata to order
-      console.log('[DEBUG PAYMENT] Step 3: Adding payment to order...');
       const result = await graphqlClient.mutation(ADD_PAYMENT_TO_ORDER, {
         input: {
-          method: 'dummy-payment-method',
+          method: 'stripe',
           metadata: {
             paymentIntentId: 'stripe-payment',
-            stripePaymentCompleted: true,
           },
         },
       });
 
-      console.log('[DEBUG PAYMENT] Add payment result:', JSON.stringify(result.data, null, 2));
-
       if (result.data?.addPaymentToOrder?.id) {
-        console.log('[DEBUG PAYMENT] SUCCESS! Payment added, order ID:', result.data.addPaymentToOrder.id);
-        console.log('[DEBUG PAYMENT] Final order state:', result.data.addPaymentToOrder.state);
         clearCart();
         router.push(`/checkout/success?orderId=${result.data.addPaymentToOrder.id}`);
       } else if (result.data?.addPaymentToOrder?.errorCode) {
-        console.error('[DEBUG PAYMENT] ERROR from API:', result.data.addPaymentToOrder);
         setError(result.data.addPaymentToOrder.message || 'Failed to complete order');
       } else {
-        console.error('[DEBUG PAYMENT] ERROR: Unknown response format:', result);
         setError('Failed to complete order');
       }
     } catch (err: any) {
-      console.error('[DEBUG PAYMENT] EXCEPTION:', err);
-      console.error('[DEBUG PAYMENT] Error stack:', err.stack);
       setError(err.message || 'An error occurred');
     } finally {
       setLoading(false);
-      console.log('[DEBUG PAYMENT] ========== PAYMENT PROCESS ENDED ==========');
     }
   };
 
@@ -504,10 +411,7 @@ export default function CheckoutPage() {
                       name="shipping"
                       value={method.id}
                       checked={selectedShipping === method.id}
-                      onChange={(e) => {
-                        setSelectedShipping(e.target.value);
-                        setShippingPrice(method.priceWithTax);
-                      }}
+                      onChange={(e) => setSelectedShipping(e.target.value)}
                       className="mr-3"
                     />
                     <span className="font-semibold">{method.name}</span>
@@ -588,11 +492,11 @@ export default function CheckoutPage() {
               </div>
               <div className="flex justify-between text-sm">
                 <span>Shipping</span>
-                <span>{shippingPrice > 0 ? formatPrice(shippingPrice) : 'TBD'}</span>
+                <span>{step === 'payment' && selectedShipping ? 'Calculated' : 'TBD'}</span>
               </div>
               <div className="flex justify-between font-bold text-lg border-t pt-2">
                 <span>Total</span>
-                <span>{formatPrice(totalPrice + shippingPrice)}</span>
+                <span>{formatPrice(totalPrice)}</span>
               </div>
             </div>
           </div>

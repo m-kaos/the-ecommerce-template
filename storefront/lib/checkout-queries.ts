@@ -25,6 +25,25 @@ export const ADD_ITEM_TO_ORDER = gql`
   }
 `;
 
+export const REMOVE_ORDER_LINE = gql`
+  mutation RemoveOrderLine($orderLineId: ID!) {
+    removeOrderLine(orderLineId: $orderLineId) {
+      ... on Order {
+        id
+        code
+        state
+        lines {
+          id
+        }
+      }
+      ... on ErrorResult {
+        errorCode
+        message
+      }
+    }
+  }
+`;
+
 export const GET_ACTIVE_ORDER = gql`
   query GetActiveOrder {
     activeOrder {
@@ -76,6 +95,7 @@ export const SET_SHIPPING_ADDRESS = gql`
     setOrderShippingAddress(input: $input) {
       ... on Order {
         id
+        state
         shippingAddress {
           fullName
           streetLine1
@@ -107,6 +127,7 @@ export const SET_SHIPPING_METHOD = gql`
     setOrderShippingMethod(shippingMethodId: $shippingMethodId) {
       ... on Order {
         id
+        state
         shipping
         shippingWithTax
         totalWithTax
@@ -147,6 +168,26 @@ export const TRANSITION_TO_STATE = gql`
         errorCode
         message
         transitionError
+      }
+    }
+  }
+`;
+
+export const SET_CUSTOMER_FOR_ORDER = gql`
+  mutation SetCustomerForOrder($input: CreateCustomerInput!) {
+    setCustomerForOrder(input: $input) {
+      ... on Order {
+        id
+        customer {
+          id
+          emailAddress
+          firstName
+          lastName
+        }
+      }
+      ... on ErrorResult {
+        errorCode
+        message
       }
     }
   }

@@ -27,19 +27,17 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
 
-    console.log('Login page: submitting form');
     const result = await login(email, password);
-    console.log('Login page: result received', result);
 
     if (result.success) {
-      console.log('Login page: redirecting to /account');
+      
       // Small delay to ensure auth state is updated before redirect
       setTimeout(() => {
         window.location.href = '/account';
-        console.log('Login page: redirect initiated');
+        
       }, 100);
     } else {
-      console.log('Login page: login failed', result.error);
+      
       setError(result.error || 'Login failed');
       setLoading(false);
     }

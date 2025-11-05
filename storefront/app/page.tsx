@@ -10,13 +10,12 @@ export const revalidate = 0;
 
 async function getProducts() {
   try {
-    console.log('Fetching products from:', graphqlClient.url);
+    
     const result = await graphqlClient.query<ProductListResponse>(
       GET_PRODUCTS,
       { options: { take: 6 } }
     );
-    console.log('Products fetched:', result.data?.products.items?.length || 0);
-    console.log('Result:', JSON.stringify(result, null, 2));
+
     return result.data?.products.items || [];
   } catch (error) {
     console.error('Error fetching products:', error);

@@ -52,7 +52,6 @@ export default function SearchBar() {
 
       setLoading(true);
       try {
-        console.log('Searching for:', query);
 
         // Use GET_PRODUCTS with filter instead of search since search index isn't working
         const result = await graphqlClient.query(GET_PRODUCTS, {
@@ -63,8 +62,6 @@ export default function SearchBar() {
             take: 5,
           },
         });
-
-        console.log('Search result:', result);
 
         if (result.data?.products?.items) {
           // Convert to search result format
@@ -80,11 +77,10 @@ export default function SearchBar() {
             currencyCode: product.variants[0]?.currencyCode || 'USD',
           }));
 
-          console.log('Mapped results:', searchResults);
           setResults(searchResults);
           setIsOpen(true);
         } else {
-          console.log('No items found in result');
+          
           setResults([]);
           setIsOpen(true);
         }

@@ -1,0 +1,16 @@
+--- a/app/products/[slug]/page.tsx
++++ b/app/products/[slug]/page.tsx
+@@ -116,9 +116,10 @@
+           {product.description && (
+             <div className="mb-6">
+               <h2 className="text-lg font-semibold mb-2">Description</h2>
+-              <p className="text-gray-700 leading-relaxed">
+-                {product.description}
+-              </p>
++              <div
++                className="text-gray-700 leading-relaxed"
++                dangerouslySetInnerHTML={{ __html: product.description }}
++              />
+             </div>
+           )}
+ 

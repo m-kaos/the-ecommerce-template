@@ -29,14 +29,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchCustomer = async () => {
     try {
-      console.log('Fetching active customer...');
+      
       const result = await graphqlClient.query(GET_ACTIVE_CUSTOMER, {});
-      console.log('Active customer result:', result);
+      
       if (result.data?.activeCustomer) {
-        console.log('Setting customer:', result.data.activeCustomer);
+        
         setCustomer(result.data.activeCustomer);
       } else {
-        console.log('No active customer found');
+        
         setCustomer(null);
       }
     } catch (error) {
@@ -53,30 +53,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
-      console.log('Attempting login with:', email);
+      
       const result = await graphqlClient.mutation(LOGIN_MUTATION, {
         email,
         password,
       });
 
-      console.log('Login result:', result);
-
       if (result.data?.login?.id) {
         // Login successful
-        console.log('Login successful, fetching customer...');
+        
         await fetchCustomer();
-        console.log('Customer fetched after login');
+        
         return { success: true };
       } else if (result.data?.login?.errorCode) {
         // Login failed with error
-        console.log('Login failed with error:', result.data.login);
+        
         return {
           success: false,
           error: result.data.login.message || 'Login failed',
         };
       }
 
-      console.log('Login failed - no id or error');
       return { success: false, error: 'Login failed' };
     } catch (error: any) {
       console.error('Login error:', error);
