@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
@@ -14,6 +14,9 @@ import {
   GET_ACTIVE_ORDER,
   TRANSITION_TO_STATE,
 } from '@/lib/checkout-queries';
+import { Elements } from '@stripe/react-stripe-js';
+import { getStripe } from '@/lib/stripe';
+import StripePaymentForm from '@/components/StripePaymentForm';
 
 type Step = 'address' | 'shipping' | 'payment' | 'review';
 
@@ -59,9 +62,17 @@ export default function CheckoutPage() {
   // Shipping
   const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([]);
   const [selectedShipping, setSelectedShipping] = useState<string>('');
+  const [shippingPrice, setShippingPrice] = useState<number>(0);
+
+  // Stripe states
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [stripePromise] = useState(() => getStripe());
 
   // Flag to prevent redirect when payment is being processed
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
+  // Ref to prevent multiple order creations
+  const orderCreationInProgress = useRef(false);
 
   useEffect(() => {
     console.log('2. First useEffect - Auth/Redirect Check');
@@ -86,96 +97,150 @@ export default function CheckoutPage() {
     }
   }, [customer, authLoading, items, router, address.fullName, isProcessingPayment]);
 
-  // Create order when checkout starts
+  // Create order when checkout starts - ROBUST VERSION
   useEffect(() => {
-    console.log('3. Second useEffect - Order Creation');
+    console.log('[ORDER MANAGEMENT] Starting order creation check...');
+
+    // Prevent multiple simultaneous order creations
+    if (orderCreationInProgress.current) {
+      console.log('[ORDER MANAGEMENT] Order creation already in progress, skipping');
+      return;
+    }
+
     const createOrder = async () => {
-      console.log('   -> Checking conditions: customer?', !!customer, 'items?', items.length, 'orderId?', orderId);
+      console.log('[ORDER MANAGEMENT] Conditions - customer:', !!customer, 'items:', items.length, 'orderId:', orderId);
 
-      if (customer && items.length > 0) {
-        // First, check if there's already an active order
-        console.log('   -> Checking for existing active order...');
-        try {
-          const checkResult = await graphqlClient.query(GET_ACTIVE_ORDER, {});
-          console.log('   -> Active order check result:', JSON.stringify(checkResult, null, 2));
+      if (!customer || items.length === 0) {
+        console.log('[ORDER MANAGEMENT] Missing customer or items, skipping');
+        return;
+      }
 
-          if (checkResult.data?.activeOrder?.id) {
-            const existingOrderId = checkResult.data.activeOrder.id;
-            const existingOrder = checkResult.data.activeOrder;
-            console.log('   -> ✓ Found existing active order:', existingOrderId);
-            console.log('   -> Order has', existingOrder.lines?.length || 0, 'line items');
+      orderCreationInProgress.current = true;
 
-            // Check if order already has items
-            if (existingOrder.lines && existingOrder.lines.length > 0) {
-              console.log('   -> Order already has items, no need to add more');
-              if (orderId !== existingOrderId) {
-                console.log('   -> Updating orderId state from', orderId, 'to', existingOrderId);
-                setOrderId(existingOrderId);
+      try {
+        // Check for existing active order with fresh data
+        console.log('[ORDER MANAGEMENT] Checking for existing active order...');
+        const checkResult = await graphqlClient.query(GET_ACTIVE_ORDER, {}, {
+          requestPolicy: 'network-only', // Always fetch fresh
+        });
+
+        const existingOrder = checkResult.data?.activeOrder;
+
+        if (existingOrder) {
+          console.log('[ORDER MANAGEMENT] Found order:', existingOrder.id, 'State:', existingOrder.state);
+
+          // Check if order is in a USABLE state
+          const usableStates = ['AddingItems', 'ArrangingPayment'];
+
+          if (!usableStates.includes(existingOrder.state)) {
+            console.warn('[ORDER MANAGEMENT] ⚠️ Order is in non-usable state:', existingOrder.state);
+            console.log('[ORDER MANAGEMENT] This is a COMPLETED order. Cart should start fresh.');
+            console.log('[ORDER MANAGEMENT] Clearing local state and starting new order...');
+
+            // Clear the local orderId so we can start fresh
+            setOrderId(null);
+            orderCreationInProgress.current = false;
+
+            // Items need to be added to create a NEW order
+            console.log('[ORDER MANAGEMENT] Adding items to create NEW order...');
+
+            for (let i = 0; i < items.length; i++) {
+              const item = items[i];
+              console.log(`[ORDER MANAGEMENT] Adding item ${i + 1}/${items.length}:`, item.productName);
+
+              const addResult = await graphqlClient.mutation(ADD_ITEM_TO_ORDER, {
+                productVariantId: item.variantId,
+                quantity: item.quantity,
+              });
+
+              if (addResult.data?.addItemToOrder?.errorCode) {
+                console.error('[ORDER MANAGEMENT] ❌ Error adding item:', addResult.data.addItemToOrder.message);
+
+                // If error is "no active order", it means the old order is truly stuck
+                if (addResult.data.addItemToOrder.errorCode === 'NO_ACTIVE_ORDER_ERROR') {
+                  console.log('[ORDER MANAGEMENT] Confirmed: Old order is stuck. Creating completely new session...');
+                  // Continue - Vendure will create new order on next item add
+                }
+              } else if (addResult.data?.addItemToOrder?.id) {
+                console.log(`[ORDER MANAGEMENT] ✅ Item added to order ${addResult.data.addItemToOrder.id}`);
               }
-              return; // Order already exists with items
-            } else {
-              console.log('   -> Order exists but is empty, will add items');
-              // Continue to add items below
             }
-          }
 
-          // No active order, create one
-          console.log('   -> No active order found, creating new one');
-          console.log('   -> Items to add:', items);
-
-          // Add items to Vendure order
-          for (let i = 0; i < items.length; i++) {
-            const item = items[i];
-            console.log(`   -> Adding item ${i + 1}/${items.length}:`, {
-              variantId: item.variantId,
-              name: item.productName,
-              quantity: item.quantity
+            // Fetch the newly created order
+            const newOrderResult = await graphqlClient.query(GET_ACTIVE_ORDER, {}, {
+              requestPolicy: 'network-only',
             });
 
-            const addResult = await graphqlClient.mutation(ADD_ITEM_TO_ORDER, {
-              productVariantId: item.variantId,
-              quantity: item.quantity,
-            });
-
-            console.log(`   -> Item ${i + 1} full result:`, JSON.stringify(addResult, null, 2));
-
-            if (addResult.data?.addItemToOrder?.errorCode) {
-              console.error(`   -> ❌ ERROR adding item ${i + 1}:`, addResult.data.addItemToOrder);
-              console.error(`   -> Error code: ${addResult.data.addItemToOrder.errorCode}`);
-              console.error(`   -> Error message: ${addResult.data.addItemToOrder.message}`);
-            } else if (addResult.data?.addItemToOrder?.id) {
-              console.log(`   -> ✅ Item ${i + 1} added successfully to order ${addResult.data.addItemToOrder.id}`);
+            if (newOrderResult.data?.activeOrder?.id) {
+              console.log('[ORDER MANAGEMENT] ✅ New order created:', newOrderResult.data.activeOrder.id);
+              setOrderId(newOrderResult.data.activeOrder.id);
             }
 
-            if (addResult.error) {
-              console.error(`   -> ❌ GraphQL ERROR adding item ${i + 1}:`, addResult.error);
+            orderCreationInProgress.current = false;
+            return;
+          }
+
+          // Order is in usable state
+          console.log('[ORDER MANAGEMENT] Order is in usable state:', existingOrder.state);
+
+          if (existingOrder.lines && existingOrder.lines.length > 0) {
+            console.log('[ORDER MANAGEMENT] Order already has', existingOrder.lines.length, 'items');
+
+            // Update orderId if different
+            if (orderId !== existingOrder.id) {
+              console.log('[ORDER MANAGEMENT] Updating orderId to:', existingOrder.id);
+              setOrderId(existingOrder.id);
             }
+
+            orderCreationInProgress.current = false;
+            return;
           }
 
-          // Get the newly created active order ID
-          console.log('   -> All items processed, fetching active order...');
-          const result = await graphqlClient.query(GET_ACTIVE_ORDER, {});
-          console.log('   -> Active order query result:', JSON.stringify(result, null, 2));
-
-          if (result.data?.activeOrder?.id) {
-            console.log('   -> ✓ Order created successfully! ID:', result.data.activeOrder.id);
-            setOrderId(result.data.activeOrder.id);
-          } else {
-            console.error('   -> ✗ No active order found in response');
-            console.error('   -> This means items were not added to order successfully');
-          }
-        } catch (err) {
-          console.error('   -> ✗ EXCEPTION creating order:', err);
+          console.log('[ORDER MANAGEMENT] Order exists but is empty, adding items...');
+        } else {
+          console.log('[ORDER MANAGEMENT] No active order found, will create new one by adding items');
         }
-      } else {
-        console.log('   -> ✗ Conditions not met, skipping order creation');
-        console.log('      - Has customer?', !!customer);
-        console.log('      - Has items?', items.length > 0);
+
+        // Add items to order (creates new order if none exists)
+        console.log('[ORDER MANAGEMENT] Adding', items.length, 'items to order...');
+
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          console.log(`[ORDER MANAGEMENT] Adding item ${i + 1}/${items.length}:`, item.productName);
+
+          const addResult = await graphqlClient.mutation(ADD_ITEM_TO_ORDER, {
+            productVariantId: item.variantId,
+            quantity: item.quantity,
+          });
+
+          if (addResult.data?.addItemToOrder?.errorCode) {
+            console.error('[ORDER MANAGEMENT] ❌ Error:', addResult.data.addItemToOrder.message);
+          } else if (addResult.data?.addItemToOrder?.id) {
+            console.log(`[ORDER MANAGEMENT] ✅ Item added to order ${addResult.data.addItemToOrder.id}`);
+          }
+        }
+
+        // Get final order
+        const finalResult = await graphqlClient.query(GET_ACTIVE_ORDER, {}, {
+          requestPolicy: 'network-only',
+        });
+
+        if (finalResult.data?.activeOrder?.id) {
+          console.log('[ORDER MANAGEMENT] ✅ Order ready:', finalResult.data.activeOrder.id);
+          setOrderId(finalResult.data.activeOrder.id);
+        } else {
+          console.error('[ORDER MANAGEMENT] ❌ Failed to create order');
+        }
+
+      } catch (err) {
+        console.error('[ORDER MANAGEMENT] ❌ Exception:', err);
+      } finally {
+        orderCreationInProgress.current = false;
       }
     };
 
     createOrder();
-  }, [customer, items]);
+  }, [customer, items.length]); // Only re-run when customer or item count changes
 
   const handleAddressSubmit = async (e: React.FormEvent) => {
     console.log('4. SUBMIT ADDRESS CLICKED');
@@ -238,13 +303,11 @@ export default function CheckoutPage() {
   };
 
   const handleShippingSubmit = async (e: React.FormEvent) => {
-    console.log('4.5 SHIPPING SUBMIT CLICKED');
+    console.log('[SHIPPING] Shipping method selected:', selectedShipping);
     e.preventDefault();
 
-    console.log('   -> Selected shipping method:', selectedShipping);
-
     if (!selectedShipping) {
-      console.warn('   -> ✗ No shipping method selected!');
+      console.warn('[SHIPPING] No shipping method selected!');
       setError('Please select a shipping method');
       return;
     }
@@ -253,91 +316,235 @@ export default function CheckoutPage() {
     setError('');
 
     try {
-      console.log('   -> Calling setOrderShippingMethod mutation...');
+      // First, check current order state
+      console.log('[SHIPPING] Checking current order state...');
+      const orderCheck = await graphqlClient.query(GET_ACTIVE_ORDER, {}, {
+        requestPolicy: 'network-only',
+      });
+
+      const currentOrder = orderCheck.data?.activeOrder;
+
+      if (!currentOrder) {
+        console.error('[SHIPPING] No active order found!');
+        setError('Order not found. Please start over.');
+        setLoading(false);
+        return;
+      }
+
+      console.log('[SHIPPING] Current order state:', currentOrder.state);
+
+      // Check if order is in a state where we can modify it
+      // Vendure allows modifications ONLY in AddingItems state
+      if (currentOrder.state !== 'AddingItems') {
+        console.warn('[SHIPPING] Order is in', currentOrder.state, 'state - cannot modify!');
+        console.log('[SHIPPING] This happened because setting address auto-transitioned the order');
+
+        // The order transitioned when we set the address
+        // We need to work with it as-is and NOT try to modify
+        // Just proceed to payment with current state
+
+        console.log('[SHIPPING] Proceeding to payment with current order state...');
+
+        // Get current order total
+        const orderTotal = currentOrder.totalWithTax;
+        console.log('[SHIPPING] Order total:', orderTotal);
+
+        // Create Stripe Payment Intent
+        console.log('[SHIPPING] Creating Stripe Payment Intent...');
+        try {
+          const response = await fetch('/api/create-payment-intent', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              amount: orderTotal,
+              orderId: orderId,
+            }),
+          });
+
+          const data = await response.json();
+          console.log('[SHIPPING] Payment Intent response:', data);
+
+          if (data.clientSecret) {
+            setClientSecret(data.clientSecret);
+            setStep('payment');
+            console.log('[SHIPPING] ✓ Moving to payment step');
+          } else {
+            console.error('[SHIPPING] No client secret received:', data);
+            setError(data.error || 'Failed to initialize payment');
+          }
+        } catch (paymentErr: any) {
+          console.error('[SHIPPING] Payment Intent error:', paymentErr);
+          setError('Failed to initialize payment. Please try again.');
+        }
+
+        setLoading(false);
+        return;
+      }
+
+      // Order is in AddingItems state, we can set shipping method
+      console.log('[SHIPPING] Order is in AddingItems state - setting shipping method...');
       const result = await graphqlClient.mutation(SET_SHIPPING_METHOD, {
         shippingMethodId: [selectedShipping],
       });
 
-      console.log('   -> Shipping method result:', JSON.stringify(result, null, 2));
+      console.log('[SHIPPING] Shipping method result:', result.data?.setOrderShippingMethod);
 
       if (result.data?.setOrderShippingMethod?.id) {
-        console.log('   -> ✓ Shipping method set successfully!');
-        console.log('   -> Moving to payment step...');
-        setStep('payment');
+        console.log('[SHIPPING] ✓ Shipping method set successfully!');
+
+        // Calculate total with shipping
+        const orderTotal = result.data.setOrderShippingMethod.totalWithTax;
+        console.log('[SHIPPING] Order total with shipping:', orderTotal);
+
+        // Create Stripe Payment Intent
+        console.log('[SHIPPING] Creating Stripe Payment Intent...');
+        try {
+          const response = await fetch('/api/create-payment-intent', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              amount: orderTotal,
+              orderId: orderId,
+            }),
+          });
+
+          const data = await response.json();
+          console.log('[SHIPPING] Payment Intent response:', data);
+
+          if (data.clientSecret) {
+            setClientSecret(data.clientSecret);
+            setStep('payment');
+            console.log('[SHIPPING] ✓ Moving to payment step');
+          } else {
+            console.error('[SHIPPING] No client secret received:', data);
+            setError(data.error || 'Failed to initialize payment');
+          }
+        } catch (paymentErr: any) {
+          console.error('[SHIPPING] Payment Intent error:', paymentErr);
+          setError('Failed to initialize payment. Please try again.');
+        }
       } else if (result.data?.setOrderShippingMethod?.errorCode) {
-        console.error('   -> ✗ Shipping method error:', result.data.setOrderShippingMethod);
+        console.error('[SHIPPING] Shipping method error:', result.data.setOrderShippingMethod);
+
+        // If we get ORDER_MODIFICATION_ERROR, the order transitioned during our operation
+        if (result.data.setOrderShippingMethod.errorCode === 'ORDER_MODIFICATION_ERROR') {
+          console.warn('[SHIPPING] Order transitioned during operation - recovering...');
+
+          // Get fresh order state and proceed with current total
+          const freshOrder = await graphqlClient.query(GET_ACTIVE_ORDER, {}, {
+            requestPolicy: 'network-only',
+          });
+
+          if (freshOrder.data?.activeOrder) {
+            const orderTotal = freshOrder.data.activeOrder.totalWithTax;
+            console.log('[SHIPPING] Using current order total:', orderTotal);
+
+            // Create payment intent with current state
+            const response = await fetch('/api/create-payment-intent', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                amount: orderTotal,
+                orderId: orderId,
+              }),
+            });
+
+            const data = await response.json();
+            if (data.clientSecret) {
+              setClientSecret(data.clientSecret);
+              setStep('payment');
+              console.log('[SHIPPING] ✓ Recovered - moving to payment');
+              setLoading(false);
+              return;
+            }
+          }
+        }
+
         setError(result.data.setOrderShippingMethod.message || 'Failed to set shipping method');
       } else {
-        console.error('   -> ✗ Unknown error setting shipping method');
+        console.error('[SHIPPING] Unknown error setting shipping method');
         setError('Failed to set shipping method');
       }
     } catch (err: any) {
-      console.error('   -> ✗ EXCEPTION:', err);
+      console.error('[SHIPPING] Exception:', err);
       setError(err.message || 'An error occurred');
     } finally {
       setLoading(false);
     }
   };
 
-  const handlePaymentSubmit = async (e: React.FormEvent) => {
-    console.log('5. PAYMENT SUBMIT CLICKED');
-    e.preventDefault();
+  // New Stripe payment success handler
+  const handlePaymentSuccess = async () => {
+    console.log('[STRIPE] Payment confirmed by Stripe, completing order...');
     setLoading(true);
+    setIsProcessingPayment(true);
     setError('');
 
     try {
-      console.log('   -> Submitting payment with method: dummy-payment-method');
-      console.log('   -> Current orderId:', orderId);
-
-      // First, transition order to ArrangingPayment state
-      console.log('   -> Transitioning order to ArrangingPayment state...');
-      const transitionResult = await graphqlClient.mutation(TRANSITION_TO_STATE, {
-        state: 'ArrangingPayment',
+      // First check current order state
+      console.log('[STRIPE] Checking current order state...');
+      const orderCheck = await graphqlClient.query(GET_ACTIVE_ORDER, {}, {
+        requestPolicy: 'network-only', // Force fresh fetch
       });
+      const currentOrder = orderCheck.data?.activeOrder;
 
-      console.log('   -> Transition result:', JSON.stringify(transitionResult, null, 2));
-
-      if (transitionResult.data?.transitionOrderToState?.errorCode) {
-        console.error('   -> ✗ Transition error:', transitionResult.data.transitionOrderToState);
-        setError(transitionResult.data.transitionOrderToState.message || 'Failed to prepare order for payment');
+      if (!currentOrder) {
+        console.error('[STRIPE] ERROR: No active order found after payment!');
+        setError('Order not found. Please contact support.');
+        setLoading(false);
         return;
       }
 
-      console.log('   -> ✓ Order transitioned successfully');
+      console.log('[STRIPE] Current order state:', currentOrder.state);
 
-      // Now add payment
-      console.log('   -> Adding payment...');
+      // Transition to ArrangingPayment if still in AddingItems
+      if (currentOrder.state === 'AddingItems') {
+        console.log('[STRIPE] Transitioning to ArrangingPayment...');
+        const transitionResult = await graphqlClient.mutation(TRANSITION_TO_STATE, {
+          state: 'ArrangingPayment',
+        });
+
+        if (transitionResult.data?.transitionOrderToState?.errorCode) {
+          console.error('[STRIPE] Transition error:', transitionResult.data.transitionOrderToState);
+          setError('Failed to process payment. Please contact support.');
+          setLoading(false);
+          return;
+        }
+        console.log('[STRIPE] Transitioned successfully');
+      }
+
+      // Add payment to Vendure order
+      console.log('[STRIPE] Adding payment to Vendure order...');
       const result = await graphqlClient.mutation(ADD_PAYMENT_TO_ORDER, {
         input: {
-          method: 'dummy-payment-method',
-          metadata: {},
+          method: 'dummy-payment-method', // Use configured payment method
+          metadata: {
+            stripePaymentCompleted: true,
+            source: 'stripe',
+          },
         },
       });
 
-      console.log('   -> Payment mutation result:', JSON.stringify(result, null, 2));
+      console.log('[STRIPE] Payment add result:', result.data?.addPaymentToOrder);
 
       if (result.data?.addPaymentToOrder?.id) {
-        console.log('   -> ✓ Payment successful! Order ID:', result.data.addPaymentToOrder.id);
-        // Set flag to prevent cart redirect
-        setIsProcessingPayment(true);
+        console.log('[STRIPE] ✓ Payment successful! Order ID:', result.data.addPaymentToOrder.id);
         // Clear local cart
         clearCart();
         // Redirect to success page
-        console.log('   -> Redirecting to success page...');
         router.push(`/checkout/success?orderId=${result.data.addPaymentToOrder.id}`);
       } else if (result.data?.addPaymentToOrder?.errorCode) {
-        console.error('   -> ✗ Payment error:', result.data.addPaymentToOrder);
-        console.error('   -> Error code:', result.data.addPaymentToOrder.errorCode);
-        console.error('   -> Error message:', result.data.addPaymentToOrder.message);
+        console.error('[STRIPE] Payment error:', result.data.addPaymentToOrder);
         setError(result.data.addPaymentToOrder.message || 'Payment failed');
+        setLoading(false);
       } else {
-        console.error('   -> ✗ Payment failed - no ID and no error in response');
-        setError('Payment failed');
+        console.error('[STRIPE] Unknown payment error');
+        setError('Payment processing failed');
+        setLoading(false);
       }
     } catch (err: any) {
-      console.error('   -> ✗ EXCEPTION during payment:', err);
+      console.error('[STRIPE] Exception:', err);
       setError(err.message || 'An error occurred');
-    } finally {
       setLoading(false);
     }
   };
@@ -403,7 +610,34 @@ export default function CheckoutPage() {
 
       {error && (
         <div className="max-w-2xl mx-auto mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-          {error}
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <p className="font-semibold">Error</p>
+              <p className="text-sm mt-1">{error}</p>
+              {error.includes('no active Order') && (
+                <p className="text-xs mt-2 text-red-600">
+                  The previous order is stuck in a completed state.
+                </p>
+              )}
+            </div>
+            {error.includes('no active Order') && (
+              <button
+                onClick={async () => {
+                  setError('');
+                  console.log('[RECOVERY] Clearing session and reloading...');
+                  // Clear cookies
+                  document.cookie.split(";").forEach(c => {
+                    document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+                  });
+                  // Reload to start fresh
+                  window.location.href = '/cart';
+                }}
+                className="ml-4 px-4 py-2 bg-red-600 text-white rounded text-sm hover:bg-red-700 transition whitespace-nowrap"
+              >
+                Clear & Start Over
+              </button>
+            )}
+          </div>
         </div>
       )}
 
@@ -521,7 +755,10 @@ export default function CheckoutPage() {
                       name="shipping"
                       value={method.id}
                       checked={selectedShipping === method.id}
-                      onChange={(e) => setSelectedShipping(e.target.value)}
+                      onChange={(e) => {
+                        setSelectedShipping(e.target.value);
+                        setShippingPrice(method.priceWithTax);
+                      }}
                       className="mr-3"
                     />
                     <span className="font-semibold">{method.name}</span>
@@ -553,78 +790,18 @@ export default function CheckoutPage() {
           )}
 
           {/* Payment Step */}
-          {step === 'payment' && (() => {
-            console.log('🎨 RENDERING PAYMENT FORM - step is:', step);
-            return (
+          {step === 'payment' && clientSecret && stripePromise && (
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-2xl font-semibold mb-6">Payment</h2>
-              <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded mb-6">
-                <p className="font-semibold">Development Mode</p>
-                <p className="text-sm">Using dummy payment handler. No real payment will be processed.</p>
-              </div>
-
-              <form onSubmit={(e) => {
-                console.log('📝 FORM SUBMIT EVENT FIRED');
-                handlePaymentSubmit(e);
-              }}>
-                <div className="space-y-4 mb-6">
-                  <div>
-                    <label className="block text-sm font-semibold mb-2">Card Number</label>
-                    <input
-                      type="text"
-                      placeholder="4242 4242 4242 4242"
-                      className="w-full px-4 py-2 border rounded-lg"
-                      disabled
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-semibold mb-2">Expiry Date</label>
-                      <input
-                        type="text"
-                        placeholder="MM/YY"
-                        className="w-full px-4 py-2 border rounded-lg"
-                        disabled
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold mb-2">CVV</label>
-                      <input
-                        type="text"
-                        placeholder="123"
-                        className="w-full px-4 py-2 border rounded-lg"
-                        disabled
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex gap-4">
-                  <button
-                    type="button"
-                    onClick={() => setStep('shipping')}
-                    className="flex-1 border border-gray-300 py-3 rounded-lg hover:bg-gray-50"
-                  >
-                    Back
-                  </button>
-                  <button
-                    type="button"
-                    disabled={loading}
-                    onClick={(e) => {
-                      alert('BUTTON CLICKED!');
-                      console.log('🔴 BUTTON CLICKED DIRECTLY!');
-                      handlePaymentSubmit(e as any);
-                    }}
-                    className="flex-1 bg-primary-600 text-white py-3 rounded-lg hover:bg-primary-700 transition font-semibold disabled:bg-gray-400"
-                  >
-                    {loading ? 'Processing...' : 'Place Order'}
-                  </button>
-                </div>
-              </form>
+              <Elements stripe={stripePromise} options={{ clientSecret }}>
+                <StripePaymentForm
+                  onSuccess={handlePaymentSuccess}
+                  onBack={() => setStep('shipping')}
+                  totalAmount={totalPrice + shippingPrice}
+                />
+              </Elements>
             </div>
-            );
-          })()}
+          )}
         </div>
 
         {/* Order Summary Sidebar */}
@@ -662,11 +839,11 @@ export default function CheckoutPage() {
               </div>
               <div className="flex justify-between text-sm">
                 <span>Shipping</span>
-                <span>{step === 'payment' && selectedShipping ? 'Calculated' : 'TBD'}</span>
+                <span>{shippingPrice > 0 ? formatPrice(shippingPrice) : 'TBD'}</span>
               </div>
               <div className="flex justify-between font-bold text-lg border-t pt-2">
                 <span>Total</span>
-                <span>{formatPrice(totalPrice)}</span>
+                <span>{formatPrice(totalPrice + shippingPrice)}</span>
               </div>
             </div>
           </div>
