@@ -16,7 +16,7 @@ interface Customer {
 interface AuthContextType {
   customer: Customer | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   refetchCustomer: () => Promise<void>;
 }
@@ -51,12 +51,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     fetchCustomer();
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, rememberMe: boolean = false) => {
     try {
-      console.log('Attempting login with:', email);
+      console.log('Attempting login with:', email, 'Remember me:', rememberMe);
       const result = await graphqlClient.mutation(LOGIN_MUTATION, {
         email,
         password,
+        rememberMe,
       });
 
       console.log('Login result:', result);

@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { graphqlClient } from '@/lib/graphql-client';
 import { REGISTER_CUSTOMER } from '@/lib/auth-queries';
+import { saveFormData, getFormData, clearFormData } from '@/lib/form-storage';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -18,6 +19,32 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const router = useRouter();
+
+  // Load saved form data from login page
+  useEffect(() => {
+    const savedData = getFormData();
+    if (savedData.email || savedData.password) {
+      setFormData(prev => ({
+        ...prev,
+        emailAddress: savedData.email || '',
+        password: savedData.password || '',
+        firstName: savedData.firstName || '',
+        lastName: savedData.lastName || '',
+        phoneNumber: savedData.phoneNumber || '',
+      }));
+    }
+  }, []);
+
+  // Save form data as user types
+  useEffect(() => {
+    saveFormData({
+      email: formData.emailAddress,
+      password: formData.password,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      phoneNumber: formData.phoneNumber,
+    });
+  }, [formData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({

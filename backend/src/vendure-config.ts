@@ -34,7 +34,12 @@ export const config: VendureConfig = {
     },
     cookieOptions: {
       secret: process.env.COOKIE_SECRET || 'cookie-secret-change-me',
+      httpOnly: true,
+      sameSite: 'lax',
+      // Session expires in 30 days by default
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days in milliseconds
     },
+    sessionDuration: '30d', // Keep sessions alive for 30 days
   },
   dbConnectionOptions: {
     type: 'postgres',

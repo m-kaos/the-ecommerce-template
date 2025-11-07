@@ -4,16 +4,32 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { saveFormData, getFormData, clearFormData, setRememberMe as saveRememberMe, getRememberMe } from '@/lib/form-storage';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showRegisteredMessage, setShowRegisteredMessage] = useState(false);
   const { login } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  // Load saved form data and remember me preference
+  useEffect(() => {
+    const savedData = getFormData();
+    const shouldRemember = getRememberMe();
+
+    if (savedData.email) {
+      setEmail(savedData.email);
+    }
+    if (savedData.password && shouldRemember) {
+      setPassword(savedData.password);
+    }
+    setRememberMe(shouldRemember);
+  }, []);
 
   useEffect(() => {
     if (searchParams.get('registered') === 'true') {
@@ -22,17 +38,33 @@ export default function LoginPage() {
     }
   }, [searchParams]);
 
+  // Save form data as user types
+  useEffect(() => {
+    if (email || password) {
+      saveFormData({ email, password });
+    }
+  }, [email, password]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
+    // Save remember me preference
+    saveRememberMe(rememberMe);
+
     console.log('Login page: submitting form');
-    const result = await login(email, password);
+    const result = await login(email, password, rememberMe);
     console.log('Login page: result received', result);
 
     if (result.success) {
       console.log('Login page: redirecting to /account');
+
+      // Clear password if not remembering
+      if (!rememberMe) {
+        clearFormData();
+      }
+
       // Small delay to ensure auth state is updated before redirect
       setTimeout(() => {
         window.location.href = '/account';
@@ -92,6 +124,19 @@ export default function LoginPage() {
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-600"
                 placeholder="••••••••"
               />
+            </div>
+
+            <div className="flex items-center">
+              <input
+                id="rememberMe"
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+              />
+              <label htmlFor="rememberMe" className="ml-2 text-sm text-gray-700">
+                Remember me for 30 days
+              </label>
             </div>
 
             <button
