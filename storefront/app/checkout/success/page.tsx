@@ -259,8 +259,14 @@ export default function OrderSuccessPage() {
             {/* Action Buttons */}
             <div className="space-y-3 mt-6">
               <Link
-                href="/account"
+                href={`/orders/${order.id}`}
                 className="block w-full bg-primary-600 text-white text-center px-6 py-3 rounded-lg hover:bg-primary-700 transition font-semibold"
+              >
+                Track Order
+              </Link>
+              <Link
+                href="/account"
+                className="block w-full border border-gray-300 text-center px-6 py-3 rounded-lg hover:bg-gray-50 transition font-semibold"
               >
                 View All Orders
               </Link>

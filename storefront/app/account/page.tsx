@@ -218,7 +218,7 @@ export default function AccountPage() {
                 return (
                   <Link
                     key={order.id}
-                    href={`/checkout/success?orderId=${order.id}`}
+                    href={`/orders/${order.id}`}
                     className="block border border-gray-200 rounded-lg p-4 hover:border-primary-600 transition"
                   >
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">

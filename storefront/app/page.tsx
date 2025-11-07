@@ -30,28 +30,28 @@ export default async function Home() {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Hero Section */}
-      <section className="text-center py-16 mb-12">
-        <h1 className="text-5xl font-bold mb-4">Welcome to Vendure Store</h1>
-        <p className="text-xl text-gray-600 mb-8">
-          Discover amazing products at great prices
+      <section className="text-center py-16 mb-12 bg-gradient-to-r from-red-50 to-red-100 rounded-2xl">
+        <h1 className="text-5xl font-bold mb-4 text-gray-900">Bienvenido a KaoStore</h1>
+        <p className="text-xl text-gray-700 mb-8">
+          Descubre productos increíbles a excelentes precios
         </p>
         <Link
           href="/products"
-          className="bg-primary-600 text-white px-8 py-3 rounded-lg hover:bg-primary-700 transition inline-block"
+          className="bg-red-600 text-white px-8 py-3 rounded-lg hover:bg-red-700 transition inline-block font-semibold"
         >
-          Shop Now
+          Comprar Ahora
         </Link>
       </section>
 
       {/* Featured Products */}
       <section>
         <div className="flex justify-between items-center mb-8">
-          <h2 className="text-3xl font-bold">Featured Products</h2>
+          <h2 className="text-3xl font-bold">Productos Destacados</h2>
           <Link
             href="/products"
-            className="text-primary-600 hover:text-primary-700 font-semibold"
+            className="text-red-600 hover:text-red-700 font-semibold"
           >
-            View All →
+            Ver Todos →
           </Link>
         </div>
 
@@ -64,10 +64,10 @@ export default async function Home() {
         ) : (
           <div className="text-center py-12 bg-gray-50 rounded-lg">
             <p className="text-gray-600 text-lg">
-              No products available yet. Please check back later.
+              Aún no hay productos disponibles. Por favor vuelve más tarde.
             </p>
             <p className="text-sm text-gray-500 mt-2">
-              Make sure the Vendure backend is running and populated with products.
+              Asegúrate de que el backend esté corriendo y tenga productos.
             </p>
           </div>
         )}
@@ -75,25 +75,25 @@ export default async function Home() {
 
       {/* Features */}
       <section className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="text-center p-6">
+        <div className="text-center p-6 bg-white rounded-lg shadow-md">
           <div className="text-4xl mb-4">🚚</div>
-          <h3 className="font-semibold text-lg mb-2">Free Shipping</h3>
+          <h3 className="font-semibold text-lg mb-2">Envío Gratis</h3>
           <p className="text-gray-600 text-sm">
-            On orders over $50
+            En pedidos mayores a $50
           </p>
         </div>
-        <div className="text-center p-6">
+        <div className="text-center p-6 bg-white rounded-lg shadow-md">
           <div className="text-4xl mb-4">🔒</div>
-          <h3 className="font-semibold text-lg mb-2">Secure Payment</h3>
+          <h3 className="font-semibold text-lg mb-2">Pago Seguro</h3>
           <p className="text-gray-600 text-sm">
-            100% secure transactions
+            100% transacciones seguras
           </p>
         </div>
-        <div className="text-center p-6">
+        <div className="text-center p-6 bg-white rounded-lg shadow-md">
           <div className="text-4xl mb-4">↩️</div>
-          <h3 className="font-semibold text-lg mb-2">Easy Returns</h3>
+          <h3 className="font-semibold text-lg mb-2">Devoluciones Fáciles</h3>
           <p className="text-gray-600 text-sm">
-            30-day return policy
+            Política de devolución de 30 días
           </p>
         </div>
       </section>

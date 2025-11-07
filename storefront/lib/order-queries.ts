@@ -6,12 +6,30 @@ export const GET_ORDER_BY_ID = gql`
       id
       code
       state
+      active
       orderPlacedAt
+      updatedAt
       totalWithTax
       shippingWithTax
       subTotalWithTax
       currencyCode
+      customer {
+        id
+        firstName
+        lastName
+        emailAddress
+      }
       shippingAddress {
+        fullName
+        streetLine1
+        streetLine2
+        city
+        province
+        postalCode
+        country
+        phoneNumber
+      }
+      billingAddress {
         fullName
         streetLine1
         streetLine2
@@ -40,10 +58,38 @@ export const GET_ORDER_BY_ID = gql`
       }
       shippingLines {
         shippingMethod {
+          id
           name
+          code
           description
         }
         priceWithTax
+      }
+      payments {
+        id
+        transactionId
+        amount
+        method
+        state
+        errorMessage
+        metadata
+        createdAt
+      }
+      fulfillments {
+        id
+        state
+        method
+        trackingCode
+        createdAt
+        updatedAt
+      }
+      history {
+        items {
+          id
+          type
+          createdAt
+          data
+        }
       }
     }
   }

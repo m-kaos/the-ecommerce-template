@@ -8,6 +8,7 @@ import { defaultEmailHandlers, EmailPlugin } from '@vendure/email-plugin';
 import { AssetServerPlugin } from '@vendure/asset-server-plugin';
 import { AdminUiPlugin } from '@vendure/admin-ui-plugin';
 import path from 'path';
+import { ContentManagementPlugin } from './plugins/content-management';
 
 const IS_DEV = process.env.NODE_ENV !== 'production';
 
@@ -82,5 +83,6 @@ export const config: VendureConfig = {
       route: 'admin',
       port: 3002,
     }),
+    ContentManagementPlugin,
   ],
 };

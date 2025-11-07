@@ -9,8 +9,8 @@ import { AuthProvider } from '@/contexts/AuthContext';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Vendure Store',
-  description: 'Modern e-commerce storefront powered by Vendure',
+  title: 'KaoStore',
+  description: 'Tu tienda en línea de confianza para productos de calidad',
 };
 
 export default function RootLayout({
@@ -19,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="es">
       <body className={inter.className}>
         <AuthProvider>
           <CartProvider>
