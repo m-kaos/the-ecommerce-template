@@ -1,8 +1,37 @@
 # Admin Content Management System - Complete Guide
 
+## 📌 For Template Users
+
+This document explains the **Content Management System** built into this e-commerce template. The system allows you to edit certain website content directly from the admin dashboard without touching code.
+
+### Hybrid Approach
+
+This template uses a **hybrid content management strategy**:
+
+- **Admin-Editable Content** ✅ Currently Active
+  - Email addresses (support, contact)
+  - Social media links
+  - **Future**: Page content (About, Policies, FAQ)
+
+- **Hardcoded Content** (Default for most pages)
+  - About Us page text
+  - Shipping & Return policies
+  - FAQ questions and answers
+  - Legal/Terms pages
+
+**Why hybrid?** This gives you flexibility:
+- Quick setup: Use hardcoded content as-is
+- Client control: Connect pages to admin for non-technical clients
+- Version control: Track content changes in Git
+- Performance: No database queries for static content
+
+See "Connecting More Pages to Admin" below to make additional content admin-editable.
+
+---
+
 ## ✅ IMPLEMENTATION STATUS: COMPLETE
 
-The KaoStore admin content management system is now fully operational, allowing you to edit website content directly from the Vendure Admin Dashboard.
+The admin content management system is fully operational and ready to use.
 
 ## 🎯 Features
 
@@ -239,34 +268,166 @@ type SocialMedia {
 }
 ```
 
-## 🎨 Future Enhancements
+## 🔌 Connecting More Pages to Admin
 
-### Planned Features:
+Want to make the hardcoded content admin-editable? Here's how:
 
-1. **Admin UI Extension**
-   - Custom "Content Manager" tab in admin
-   - Better UX for content editing
-   - Live preview
+### Example: Making the About Page Admin-Editable
 
-2. **Multi-language Support**
-   - Store content in multiple languages
-   - Language selector in admin
-   - i18n on storefront
+Currently, the About page uses hardcoded text in `storefront/app/about/page.tsx`. To make it admin-editable:
 
-3. **Content Versioning**
-   - Track content changes
-   - Revert to previous versions
-   - Audit log
+#### Step 1: Update the About Page Component
 
-4. **Media Management**
-   - Upload images for content
-   - Image gallery
-   - Featured images for pages
+**File**: `storefront/app/about/page.tsx`
 
-5. **Caching**
-   - Cache content on storefront
-   - Invalidate on admin save
-   - Reduce API calls
+```typescript
+'use client';
+
+import { useContent } from '@/hooks/useContent';
+
+export default function AboutPage() {
+  const { content, loading } = useContent();
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-4xl font-bold mb-8">Sobre Nosotros</h1>
+
+      {/* Use content.aboutUs instead of hardcoded text */}
+      <div
+        className="prose max-w-none"
+        dangerouslySetInnerHTML={{ __html: content.aboutUs || 'Default content here' }}
+      />
+
+      <a href={`mailto:${content.supportEmail}`} className="btn">
+        Contáctanos
+      </a>
+    </div>
+  );
+}
+```
+
+#### Step 2: Add Content in Admin
+
+1. Go to http://localhost:3001/admin
+2. Navigate to **Settings**
+3. Scroll to **"About Us Content"** field
+4. Add your content (supports rich text/HTML)
+5. Click **Save**
+
+#### Step 3: Test
+
+1. Refresh the About page: http://localhost:3000/about
+2. Content should now display from admin
+
+### Example: Making FAQ Admin-Editable
+
+**File**: `storefront/app/faq/page.tsx`
+
+```typescript
+'use client';
+
+import { useContent } from '@/hooks/useContent';
+
+interface FAQItem {
+  question: string;
+  answer: string;
+}
+
+export default function FAQPage() {
+  const { content, loading } = useContent();
+
+  let faqItems: FAQItem[] = [];
+
+  try {
+    // Parse JSON FAQ content from admin
+    faqItems = content.faqContent ? JSON.parse(content.faqContent) : [];
+  } catch (error) {
+    console.error('Failed to parse FAQ content:', error);
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-4xl font-bold mb-8">Preguntas Frecuentes</h1>
+
+      {faqItems.map((item, index) => (
+        <div key={index} className="mb-6">
+          <h3 className="text-xl font-semibold">{item.question}</h3>
+          <p className="text-gray-600 mt-2">{item.answer}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+**In Admin Settings**, add FAQ Content as JSON:
+
+```json
+[
+  {
+    "question": "¿Cuál es la política de envíos?",
+    "answer": "Enviamos a toda España en 24-48 horas."
+  },
+  {
+    "question": "¿Aceptan devoluciones?",
+    "answer": "Sí, aceptamos devoluciones hasta 30 días después de la compra."
+  }
+]
+```
+
+### When to Use Admin-Editable vs Hardcoded
+
+**Use Admin-Editable When:**
+- ✅ Client will update content frequently
+- ✅ Non-technical users need to edit
+- ✅ Content changes don't require developer
+- ✅ A/B testing different copy
+
+**Use Hardcoded When:**
+- ✅ Content rarely changes
+- ✅ Need version control for content
+- ✅ Want maximum performance
+- ✅ Complex layouts that need code changes anyway
+
+---
+
+## 🎨 Potential Enhancements
+
+Ideas for extending the content management system:
+
+### 1. Admin UI Extension
+- Custom "Content Manager" tab in admin
+- Better UX for content editing
+- Live preview of changes
+
+### 2. Multi-language Support
+- Store content in multiple languages
+- Language selector in admin
+- i18n support on storefront
+
+### 3. Content Versioning
+- Track content changes over time
+- Revert to previous versions
+- Audit log for compliance
+
+### 4. Media Management
+- Upload images for content blocks
+- Image gallery in admin
+- Featured images for pages
+
+### 5. Caching Layer
+- Cache content on storefront
+- Invalidate cache on admin save
+- Reduce API calls for better performance
+
+### 6. Page Builder
+- Drag-and-drop content blocks
+- Reusable components
+- Visual page editor
 
 ## 🐛 Troubleshooting
 
