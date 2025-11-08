@@ -127,15 +127,15 @@ Professional, production-ready e-commerce template built with **Vendure** & **Ne
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                        DOCKER COMPOSE                        │
+│                        DOCKER COMPOSE                       │
 ├─────────────────┬─────────────────┬─────────────────────────┤
 │                 │                 │                         │
-│  STOREFRONT     │   BACKEND       │   POSTGRESQL           │
-│  (Next.js 14)   │   (Vendure)     │   (Database)           │
-│  Port: 3000     │   Port: 3001    │   Port: 5432           │
+│  STOREFRONT     │   BACKEND       │   POSTGRESQL            │
+│  (Next.js 14)   │   (Vendure)     │   (Database)            │
+│  Port: 3000     │   Port: 3001    │   Port: 5432            │
 │                 │                 │                         │
-│  - React 19     │   - Node 20     │   - v15                │
-│  - TypeScript   │   - GraphQL API │   - Persistent Data    │
+│  - React 19     │   - Node 20     │   - v15                 │
+│  - TypeScript   │   - GraphQL API │   - Persistent Data     │
 │  - Tailwind CSS │   - REST APIs   │                         │
 │  - Stripe UI    │   - Admin UI    │                         │
 │                 │                 │                         │
