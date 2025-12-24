@@ -19,6 +19,7 @@ import {
   DefaultJobQueuePlugin,
   DefaultSearchPlugin,
   VendureConfig,
+  DefaultStockAllocationStrategy,
 } from '@vendure/core';
 import { defaultEmailHandlers, EmailPlugin } from '@vendure/email-plugin';
 import { AssetServerPlugin } from '@vendure/asset-server-plugin';
@@ -111,6 +112,17 @@ export const config: VendureConfig = {
    */
   paymentOptions: {
     paymentMethodHandlers: [dummyPaymentHandler], // Dummy handler for testing
+  },
+
+  /**
+   * Order Options
+   *
+   * Configures order-related behavior including stock allocation.
+   * Stock is allocated (deducted from inventory) immediately when payment is authorized,
+   * ensuring products are reserved as soon as purchase is completed.
+   */
+  orderOptions: {
+    stockAllocationStrategy: new DefaultStockAllocationStrategy(),
   },
 
   /**

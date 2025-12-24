@@ -55,6 +55,10 @@ export default function ProductPage() {
   const price = defaultVariant?.priceWithTax || 0;
   const currency = defaultVariant?.currencyCode || 'USD';
 
+  // Check if product is completely out of stock
+  const hasAnyStock = product.variants.some(variant => variant.stockLevel !== 'OUT_OF_STOCK');
+  const hasLowStock = product.variants.some(variant => variant.stockLevel === 'LOW_STOCK');
+
   const formatPrice = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -144,13 +148,37 @@ export default function ProductPage() {
 
           {/* Stock status */}
           <div className="mb-6">
-            <span className="inline-block px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold">
-              In Stock
-            </span>
+            {!hasAnyStock ? (
+              <div className="space-y-2">
+                <span className="inline-block px-4 py-2 bg-red-100 text-red-800 rounded-full text-sm font-bold">
+                  ⚠️ Out of Stock
+                </span>
+                <p className="text-sm text-gray-600">
+                  This product is currently unavailable. Please check back later.
+                </p>
+              </div>
+            ) : hasLowStock ? (
+              <span className="inline-block px-4 py-2 bg-orange-100 text-orange-800 rounded-full text-sm font-bold">
+                ⚡ Low Stock - Order Soon!
+              </span>
+            ) : (
+              <span className="inline-block px-4 py-2 bg-green-100 text-green-800 rounded-full text-sm font-bold">
+                ✓ In Stock
+              </span>
+            )}
           </div>
 
           {/* Add to cart button */}
-          <AddToCartButton product={product} />
+          {hasAnyStock ? (
+            <AddToCartButton product={product} />
+          ) : (
+            <button
+              disabled
+              className="w-full py-4 px-8 rounded-lg font-semibold text-lg bg-gray-300 text-gray-500 cursor-not-allowed"
+            >
+              Out of Stock
+            </button>
+          )}
 
           {/* Product metadata */}
           {product.collections && product.collections.length > 0 && (

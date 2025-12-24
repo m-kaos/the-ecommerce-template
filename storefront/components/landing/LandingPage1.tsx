@@ -16,7 +16,14 @@ export default function LandingPage1() {
           GET_PRODUCTS,
           { options: { take: 6 } }
         );
-        setProducts(result.data?.products.items || []);
+        const allProducts = result.data?.products.items || [];
+
+        // Filter out products where ALL variants have no stock
+        const inStockProducts = allProducts.filter(product => {
+          return product.variants.some(variant => variant.stockLevel !== 'OUT_OF_STOCK');
+        });
+
+        setProducts(inStockProducts);
       } catch (error) {
         console.error('Error fetching products:', error);
       } finally {

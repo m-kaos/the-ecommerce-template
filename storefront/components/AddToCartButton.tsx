@@ -14,9 +14,10 @@ export default function AddToCartButton({ product }: AddToCartButtonProps) {
   const [isAdding, setIsAdding] = useState(false);
 
   const defaultVariant = product.variants[0];
+  const isOutOfStock = defaultVariant?.stockLevel === 'OUT_OF_STOCK';
 
   const handleAddToCart = () => {
-    if (!defaultVariant) {
+    if (!defaultVariant || isOutOfStock) {
       return;
     }
 
@@ -68,14 +69,16 @@ export default function AddToCartButton({ product }: AddToCartButtonProps) {
 
       <button
         onClick={handleAddToCart}
-        disabled={isAdding}
+        disabled={isAdding || isOutOfStock}
         className={`w-full py-4 px-8 rounded-lg font-semibold text-lg transition ${
-          isAdding
+          isOutOfStock
+            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            : isAdding
             ? 'bg-green-600 text-white'
             : 'bg-primary-600 text-white hover:bg-primary-700'
         }`}
       >
-        {isAdding ? '✓ Added to Cart!' : 'Add to Cart'}
+        {isOutOfStock ? 'Out of Stock' : isAdding ? '✓ Added to Cart!' : 'Add to Cart'}
       </button>
     </div>
   );

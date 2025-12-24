@@ -10,6 +10,10 @@ export default function ProductCard({ product }: ProductCardProps) {
   const price = product.variants[0]?.priceWithTax || 0;
   const currency = product.variants[0]?.currencyCode || 'USD';
 
+  // Check stock status
+  const hasAnyStock = product.variants.some(variant => variant.stockLevel !== 'OUT_OF_STOCK');
+  const hasLowStock = product.variants.some(variant => variant.stockLevel === 'LOW_STOCK');
+
   const formatPrice = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -34,6 +38,20 @@ export default function ProductCard({ product }: ProductCardProps) {
               No Image
             </div>
           )}
+
+          {/* Stock badges */}
+          <div className="absolute top-3 right-3 flex flex-col gap-2">
+            {!hasAnyStock && (
+              <span className="px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-full shadow-lg">
+                SOLD OUT
+              </span>
+            )}
+            {hasAnyStock && hasLowStock && (
+              <span className="px-3 py-1 bg-orange-500 text-white text-xs font-bold rounded-full shadow-lg">
+                LOW STOCK
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="p-4 flex-grow flex flex-col">
