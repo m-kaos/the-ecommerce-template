@@ -281,7 +281,7 @@ export default function CheckoutPage() {
           console.warn('      2. Shipping methods not assigned to channel');
           console.warn('      3. No shipping methods eligible for this order');
         } else {
-          console.log('   -> Found methods:', methods.map(m => m.name).join(', '));
+          console.log('   -> Found methods:', methods.map((m: any) => m.name).join(', '));
         }
 
         setShippingMethods(methods);
