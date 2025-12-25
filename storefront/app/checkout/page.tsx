@@ -287,9 +287,9 @@ export default function CheckoutPage() {
         setShippingMethods(methods);
         setStep('shipping');
         console.log('   -> ✓ Moving to shipping step');
-      } else if (result.data?.setOrderShippingAddress?.errorCode) {
-        console.error('   -> ✗ Address error:', result.data.setOrderShippingAddress);
-        setError(result.data.setOrderShippingAddress.message || 'Failed to set shipping address');
+      } else if ((result as any).data?.setOrderShippingAddress?.errorCode) {
+        console.error('   -> ✗ Address error:', (result as any).data.setOrderShippingAddress);
+        setError((result as any).data.setOrderShippingAddress.message || 'Failed to set shipping address');
       } else {
         console.error('   -> ✗ No ID and no error in response');
         setError('Failed to set shipping address');
@@ -387,13 +387,13 @@ export default function CheckoutPage() {
         shippingMethodId: [selectedShipping],
       });
 
-      console.log('[SHIPPING] Shipping method result:', result.data?.setOrderShippingMethod);
+      console.log('[SHIPPING] Shipping method result:', (result as any).data?.setOrderShippingMethod);
 
-      if (result.data?.setOrderShippingMethod?.id) {
+      if ((result as any).data?.setOrderShippingMethod?.id) {
         console.log('[SHIPPING] ✓ Shipping method set successfully!');
 
         // Calculate total with shipping
-        const orderTotal = result.data.setOrderShippingMethod.totalWithTax;
+        const orderTotal = (result as any).data.setOrderShippingMethod.totalWithTax;
         console.log('[SHIPPING] Order total with shipping:', orderTotal);
 
         // Create Stripe Payment Intent
@@ -423,11 +423,11 @@ export default function CheckoutPage() {
           console.error('[SHIPPING] Payment Intent error:', paymentErr);
           setError('Failed to initialize payment. Please try again.');
         }
-      } else if (result.data?.setOrderShippingMethod?.errorCode) {
-        console.error('[SHIPPING] Shipping method error:', result.data.setOrderShippingMethod);
+      } else if ((result as any).data?.setOrderShippingMethod?.errorCode) {
+        console.error('[SHIPPING] Shipping method error:', (result as any).data.setOrderShippingMethod);
 
         // If we get ORDER_MODIFICATION_ERROR, the order transitioned during our operation
-        if (result.data.setOrderShippingMethod.errorCode === 'ORDER_MODIFICATION_ERROR') {
+        if ((result as any).data.setOrderShippingMethod.errorCode === 'ORDER_MODIFICATION_ERROR') {
           console.warn('[SHIPPING] Order transitioned during operation - recovering...');
 
           // Get fresh order state and proceed with current total
@@ -460,7 +460,7 @@ export default function CheckoutPage() {
           }
         }
 
-        setError(result.data.setOrderShippingMethod.message || 'Failed to set shipping method');
+        setError((result as any).data.setOrderShippingMethod.message || 'Failed to set shipping method');
       } else {
         console.error('[SHIPPING] Unknown error setting shipping method');
         setError('Failed to set shipping method');
@@ -525,17 +525,17 @@ export default function CheckoutPage() {
         },
       });
 
-      console.log('[STRIPE] Payment add result:', result.data?.addPaymentToOrder);
+      console.log('[STRIPE] Payment add result:', (result as any).data?.addPaymentToOrder);
 
-      if (result.data?.addPaymentToOrder?.id) {
-        console.log('[STRIPE] ✓ Payment successful! Order ID:', result.data.addPaymentToOrder.id);
+      if ((result as any).data?.addPaymentToOrder?.id) {
+        console.log('[STRIPE] ✓ Payment successful! Order ID:', (result as any).data.addPaymentToOrder.id);
         // Clear local cart
         clearCart();
         // Redirect to success page
-        router.push(`/checkout/success?orderId=${result.data.addPaymentToOrder.id}`);
-      } else if (result.data?.addPaymentToOrder?.errorCode) {
-        console.error('[STRIPE] Payment error:', result.data.addPaymentToOrder);
-        setError(result.data.addPaymentToOrder.message || 'Payment failed');
+        router.push(`/checkout/success?orderId=${(result as any).data.addPaymentToOrder.id}`);
+      } else if ((result as any).data?.addPaymentToOrder?.errorCode) {
+        console.error('[STRIPE] Payment error:', (result as any).data.addPaymentToOrder);
+        setError((result as any).data.addPaymentToOrder.message || 'Payment failed');
         setLoading(false);
       } else {
         console.error('[STRIPE] Unknown payment error');
