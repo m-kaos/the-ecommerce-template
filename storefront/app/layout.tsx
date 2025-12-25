@@ -9,8 +9,15 @@ import { AuthProvider } from '@/contexts/AuthContext';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'KaoStore',
-  description: 'Tu tienda en línea de confianza para productos de calidad',
+  title: 'Casa de Empeño La Nación - Préstamos Rápidos y Venta de Artículos',
+  description: 'Casa de Empeño La Nación en Nuevo León. Préstamos rápidos empeñando objetos de valor. Venta de electrónica, electrodomésticos y más con garantía de 30 días. Sucursales en San Blas y García.',
+  keywords: 'casa de empeño, préstamos rápidos, empeño México, venta electrodomésticos, San Blas, García, Nuevo León, empeño joyería, empeño electrónica',
+  openGraph: {
+    title: 'Casa de Empeño La Nación',
+    description: 'Préstamos rápidos y venta de artículos con garantía',
+    type: 'website',
+    locale: 'es_MX',
+  },
 };
 
 export default function RootLayout({

@@ -34,53 +34,53 @@ export default function LandingPage1() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-red-50">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-green-50">
       {/* Hero Section - Modern & Minimal */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-red-600/10 to-orange-600/10 backdrop-blur-3xl"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-primary-600/10 to-accent-600/10 backdrop-blur-3xl"></div>
         <div className="container mx-auto px-4 py-32 relative">
           <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-block mb-4 px-4 py-2 bg-red-100 text-red-700 rounded-full text-sm font-semibold">
-              ✨ Nueva Colección 2025
+            <div className="inline-block mb-4 px-4 py-2 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold">
+              💎 Garantía de 30 Días
             </div>
-            <h1 className="text-6xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-gray-900 via-red-900 to-gray-900 bg-clip-text text-transparent leading-tight">
-              Estilo que define
-              <br />tu personalidad
+            <h1 className="text-6xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-gray-900 via-primary-900 to-gray-900 bg-clip-text text-transparent leading-tight">
+              Préstamos Rápidos
+              <br />y Artículos de Calidad
             </h1>
             <p className="text-xl md:text-2xl text-gray-600 mb-12 max-w-2xl mx-auto">
-              Descubre una experiencia de compra única con productos cuidadosamente seleccionados para ti
+              Tu casa de empeño de confianza en Nuevo León. Empeña tus objetos de valor o encuentra grandes ofertas en artículos usados
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link
                 href="/products"
-                className="group relative px-8 py-4 bg-red-600 text-white rounded-full font-semibold text-lg overflow-hidden transition-all hover:scale-105 hover:shadow-2xl hover:shadow-red-500/50"
+                className="group relative px-8 py-4 bg-primary-600 text-white rounded-full font-semibold text-lg overflow-hidden transition-all hover:scale-105 hover:shadow-2xl hover:shadow-primary-500/50"
               >
-                <span className="relative z-10">Explorar Colección</span>
-                <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-orange-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <span className="relative z-10">Ver Artículos en Venta</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-primary-600 to-primary-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
               </Link>
               <Link
-                href="/about"
-                className="px-8 py-4 bg-white text-gray-900 rounded-full font-semibold text-lg border-2 border-gray-200 hover:border-red-600 hover:text-red-600 transition-all"
+                href="/contact"
+                className="px-8 py-4 bg-accent-500 text-white rounded-full font-semibold text-lg border-2 border-accent-500 hover:bg-accent-600 hover:border-accent-600 transition-all"
               >
-                Nuestra Historia
+                Solicitar Préstamo
               </Link>
             </div>
           </div>
         </div>
 
         {/* Floating Elements */}
-        <div className="absolute top-20 left-10 w-20 h-20 bg-red-500/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-20 right-10 w-32 h-32 bg-orange-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-20 left-10 w-20 h-20 bg-primary-500/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-20 right-10 w-32 h-32 bg-accent-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
       </section>
 
       {/* Featured Products */}
       <section className="container mx-auto px-4 py-20">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">
-            Productos Destacados
+            Artículos en Venta
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Selección premium de nuestros productos más populares
+            Electrodomésticos, electrónica y más con garantía de 30 días. ¡Aprovecha nuestros descuentos pagando de contado!
           </p>
         </div>
 
@@ -113,9 +113,9 @@ export default function LandingPage1() {
         <div className="text-center mt-12">
           <Link
             href="/products"
-            className="inline-flex items-center gap-2 text-red-600 hover:text-red-700 font-semibold text-lg group"
+            className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 font-semibold text-lg group"
           >
-            Ver Toda la Colección
+            Ver Todos los Artículos
             <span className="group-hover:translate-x-2 transition-transform">→</span>
           </Link>
         </div>
@@ -125,34 +125,34 @@ export default function LandingPage1() {
       <section className="container mx-auto px-4 py-20">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="group relative bg-white p-8 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary-500/5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
             <div className="relative">
-              <div className="text-5xl mb-6">🚀</div>
-              <h3 className="font-bold text-2xl mb-3 text-gray-900">Envío Rápido</h3>
+              <div className="text-5xl mb-6">⚡</div>
+              <h3 className="font-bold text-2xl mb-3 text-gray-900">Préstamos Rápidos</h3>
               <p className="text-gray-600">
-                Recibe tus productos en 24-48 horas. Envío gratis en compras mayores a $50
+                Obtén dinero en efectivo de forma rápida empeñando tus objetos de valor. Sin complicaciones.
               </p>
             </div>
           </div>
 
           <div className="group relative bg-white p-8 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-accent-500/5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
             <div className="relative">
-              <div className="text-5xl mb-6">🔒</div>
-              <h3 className="font-bold text-2xl mb-3 text-gray-900">Pago Seguro</h3>
+              <div className="text-5xl mb-6">💚</div>
+              <h3 className="font-bold text-2xl mb-3 text-gray-900">Garantía de 30 Días</h3>
               <p className="text-gray-600">
-                Transacciones 100% seguras con tecnología de encriptación avanzada
+                Todos nuestros artículos usados cuentan con garantía de 30 días para tu tranquilidad.
               </p>
             </div>
           </div>
 
           <div className="group relative bg-white p-8 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary-500/5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
             <div className="relative">
-              <div className="text-5xl mb-6">💎</div>
-              <h3 className="font-bold text-2xl mb-3 text-gray-900">Calidad Garantizada</h3>
+              <div className="text-5xl mb-6">💰</div>
+              <h3 className="font-bold text-2xl mb-3 text-gray-900">10% de Descuento</h3>
               <p className="text-gray-600">
-                Devoluciones sin complicaciones hasta 30 días después de tu compra
+                Paga de contado y obtén 10% de descuento en todos los artículos (no aplica en remates).
               </p>
             </div>
           </div>
@@ -161,21 +161,31 @@ export default function LandingPage1() {
 
       {/* Call to Action */}
       <section className="container mx-auto px-4 py-20">
-        <div className="bg-gradient-to-r from-red-600 to-orange-600 rounded-3xl p-12 md:p-20 text-center text-white relative overflow-hidden">
+        <div className="bg-gradient-to-r from-primary-600 to-accent-600 rounded-3xl p-12 md:p-20 text-center text-white relative overflow-hidden">
           <div className="absolute inset-0 bg-black/10"></div>
           <div className="relative z-10">
             <h2 className="text-4xl md:text-5xl font-bold mb-6">
-              ¿Listo para empezar?
+              ¿Necesitas dinero rápido?
             </h2>
-            <p className="text-xl md:text-2xl mb-10 text-red-50 max-w-2xl mx-auto">
-              Únete a miles de clientes satisfechos y descubre por qué somos su tienda favorita
+            <p className="text-xl md:text-2xl mb-10 text-orange-50 max-w-2xl mx-auto">
+              Visítanos en nuestras sucursales de Valle de San Blas o García. ¡Te atendemos con gusto!
             </p>
-            <Link
-              href="/products"
-              className="inline-block px-10 py-5 bg-white text-red-600 rounded-full font-bold text-lg hover:bg-gray-100 transition-all hover:scale-105 shadow-2xl"
-            >
-              Comenzar a Comprar
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                href="/products"
+                className="inline-block px-10 py-5 bg-white text-primary-600 rounded-full font-bold text-lg hover:bg-gray-100 transition-all hover:scale-105 shadow-2xl"
+              >
+                Ver Artículos
+              </Link>
+              <a
+                href="https://wa.me/528184743633"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block px-10 py-5 bg-accent-500 text-white rounded-full font-bold text-lg hover:bg-accent-600 transition-all hover:scale-105 shadow-2xl border-2 border-white"
+              >
+                WhatsApp
+              </a>
+            </div>
           </div>
         </div>
       </section>
