@@ -36,7 +36,7 @@ export default function LandingPage3() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       {/* Hero Section - Elegant & Luxury */}
-      <section className="relative min-h-screen flex items-center">
+      <section className="relative min-h-[80vh] md:min-h-screen flex items-center">
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-red-50/50 to-transparent"></div>
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-red-100/20 rounded-full blur-3xl"></div>
@@ -223,13 +223,13 @@ export default function LandingPage3() {
               <p className="text-xl text-red-100 mb-10 font-light">
                 Recibe ofertas exclusivas y conoce las novedades antes que nadie
               </p>
-              <div className="max-w-md mx-auto flex gap-3">
+              <div className="max-w-md mx-auto flex flex-col sm:flex-row gap-3">
                 <input
                   type="email"
                   placeholder="Tu email"
                   className="flex-1 px-6 py-4 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/60 focus:outline-none focus:border-white/40 backdrop-blur"
                 />
-                <button className="px-8 py-4 bg-white text-red-900 font-semibold rounded-lg hover:bg-gray-100 transition-colors">
+                <button className="px-8 py-4 bg-white text-red-900 font-semibold rounded-lg hover:bg-gray-100 transition-colors whitespace-nowrap">
                   Suscribirse
                 </button>
               </div>

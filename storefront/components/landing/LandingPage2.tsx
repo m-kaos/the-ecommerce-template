@@ -36,7 +36,7 @@ export default function LandingPage2() {
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Hero Section - Bold & Vibrant */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-[80vh] md:min-h-screen flex items-center justify-center overflow-hidden">
         {/* Animated Background */}
         <div className="absolute inset-0">
           <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-red-900 via-black to-orange-900"></div>
@@ -52,13 +52,13 @@ export default function LandingPage2() {
                 Tendencias 2025
               </span>
             </div>
-            <h1 className="text-7xl md:text-9xl font-black mb-8 leading-none">
+            <h1 className="text-5xl md:text-7xl lg:text-9xl font-black mb-8 leading-none">
               <span className="block text-white">VIVE</span>
               <span className="block bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 bg-clip-text text-transparent">
                 EL MOMENTO
               </span>
             </h1>
-            <p className="text-2xl md:text-3xl text-gray-300 mb-12 max-w-3xl mx-auto font-light">
+            <p className="text-lg md:text-2xl lg:text-3xl text-gray-300 mb-12 max-w-3xl mx-auto font-light">
               La moda no espera. Descubre las últimas tendencias y marca la diferencia
             </p>
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
@@ -96,11 +96,11 @@ export default function LandingPage2() {
       <section className="container mx-auto px-4 py-32">
         <div className="text-center mb-20">
           <div className="inline-block mb-4">
-            <span className="bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 bg-clip-text text-transparent font-black text-6xl md:text-8xl tracking-tighter">
+            <span className="bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 bg-clip-text text-transparent font-black text-4xl md:text-6xl lg:text-8xl tracking-tighter">
               LO MÁS HOT
             </span>
           </div>
-          <p className="text-2xl text-white font-light">
+          <p className="text-lg md:text-2xl text-white font-light">
             Los productos que todo el mundo quiere
           </p>
         </div>
@@ -184,12 +184,12 @@ export default function LandingPage2() {
         <div className="absolute inset-0 bg-gradient-to-r from-red-600 via-orange-600 to-yellow-600"></div>
         <div className="absolute inset-0 bg-black/30"></div>
         <div className="container mx-auto px-4 relative z-10 text-center">
-          <h2 className="text-6xl md:text-8xl font-black mb-8 leading-tight">
+          <h2 className="text-4xl md:text-6xl lg:text-8xl font-black mb-8 leading-tight">
             NO TE LO
             <br />
             <span className="text-yellow-300">PIERDAS</span>
           </h2>
-          <p className="text-2xl md:text-3xl mb-12 text-white/90 max-w-3xl mx-auto">
+          <p className="text-lg md:text-2xl lg:text-3xl mb-12 text-white/90 max-w-3xl mx-auto">
             Únete a la revolución del shopping online
           </p>
           <Link

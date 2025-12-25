@@ -100,11 +100,11 @@ export default function Footer() {
 
         {/* Bottom Bar */}
         <div className="border-t border-gray-800 mt-8 pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
             <p className="text-sm text-gray-400">
               &copy; {new Date().getFullYear()} Casa de Empeño La Nación. Todos los derechos reservados.
             </p>
-            <div className="flex gap-6 text-sm">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-6 text-sm">
               <span className="text-gray-400">
                 💚 Garantía de 30 días en todos los artículos
               </span>

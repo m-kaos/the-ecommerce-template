@@ -38,7 +38,7 @@ export default function LandingPage1() {
       {/* Hero Section - Modern & Minimal */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-primary-600/10 to-accent-600/10 backdrop-blur-3xl"></div>
-        <div className="container mx-auto px-4 py-32 relative">
+        <div className="container mx-auto px-4 py-16 md:py-32 relative">
           <div className="max-w-4xl mx-auto text-center">
             <div className="inline-block mb-4 px-4 py-2 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold">
               💎 Garantía de 30 Días
