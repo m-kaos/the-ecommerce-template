@@ -265,7 +265,7 @@ export default function CheckoutPage() {
       console.log('   -> Address mutation completed');
       console.log('   -> Full result:', JSON.stringify(result, null, 2));
 
-      if (result.data?.setOrderShippingAddress?.id) {
+      if ((result as any).data?.setOrderShippingAddress?.id) {
         console.log('   -> ✓ Address set successfully!');
         // Fetch shipping methods
         console.log('   -> Fetching shipping methods...');
