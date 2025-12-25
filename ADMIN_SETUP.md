@@ -20,7 +20,7 @@ Complete guide to setting up and using the Vendure admin dashboard for your e-co
 12. [Users & Roles](#users--roles)
 13. [Best Practices](#best-practices)
 
----
+--- 
 
 ## Accessing the Admin Dashboard
 
